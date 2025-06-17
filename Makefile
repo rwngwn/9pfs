@@ -52,4 +52,25 @@ ${TARG}:	${OBJS} ${HFILES}
 	${CC} -c -o $@ ${CFLAGS} $<
 
 clean:
-	rm -f ${TARG} ${OBJS}
+	rm -f ${TARG} ${OBJS} tests/test_breakpath ${TESTOBJS}
+
+TESTCFLAGS = $(CFLAGS) -fcommon
+TESTOBJS = tests/9pfs.o tests/9p.o tests/util.o \
+        tests/lib/strecpy.o tests/lib/convD2M.o tests/lib/convM2D.o \
+        tests/lib/convM2S.o tests/lib/convS2M.o tests/lib/read9pmsg.o \
+        tests/lib/readn.o tests/lib/auth_proxy.o tests/lib/auth_rpc.o \
+        tests/lib/auth_getkey.o
+
+tests/%.o: %.c $(HFILES)
+	@mkdir -p $(dir $@)
+	$(CC) -c -o $@ $(TESTCFLAGS) $<
+
+tests/9pfs.o: 9pfs.c $(HFILES)
+	@mkdir -p $(dir $@)
+	$(CC) -c -o $@ $(TESTCFLAGS) -Dmain=unused_main $<
+
+tests/test_breakpath: tests/test_breakpath.c $(TESTOBJS)
+	$(CC) -o $@ $(TESTOBJS) $< $(LDADD)
+
+check: tests/test_breakpath
+	./tests/test_breakpath
